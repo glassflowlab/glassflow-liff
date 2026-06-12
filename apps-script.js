@@ -3,7 +3,7 @@
 // 部署為 Web App，回傳商品 JSON
 // ════════════════════════════════════════════
 
-const SHEET_ID = '1zKbfdIdFD3QV0N_RFvrwuIyZ3QKOzBkA'; // 你的 Google Sheets ID
+const SHEET_ID = '16nnX2nu_uJ7FToXdtrQJN16-PiavKA66KsJNRNplakU'; // 你的 Google Sheets ID（已從 .xlsx 轉成 Google Sheets 原生格式）
 const SHEET_NAME = '商品資料';
 
 // 欄位對應（對應試算表欄位順序）
