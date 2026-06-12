@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>玻璃小店 商品型錄</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root {
+    --teal: #0F6E56;
+    --teal-light: #E1F5EE;
+    --teal-mid: #1D9E75;
+    --text: #1a1a1a;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --bg: #f8f9fa;
+    --white: #ffffff;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--teal);
+    padding: 20px 16px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-icon svg { width: 22px; height: 22px; }
+
+  .header-title {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .header-sub {
+    color: rgba(255,255,255,0.7);
+    font-size: 12px;
+    margin-top: 1px;
+  }
+
+  /* ── Category Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.85);
+  }
+
+  .tab.active {
+    background: white;
+    color: var(--teal);
+  }
+
+  /* ── Content ── */
+  .content {
+    padding: 16px 12px;
+  }
+
+  /* ── Product Grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  /* ── Product Card ── */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    text-decoration: none;
+    display: block;
+    position: relative;
+  }
+
+  .card:active {
+    transform: scale(0.97);
+  }
+
+  .card-img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: var(--teal-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card-img svg {
+    width: 48px;
+    height: 48px;
+    opacity: 0.35;
+  }
+
+  .card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .card-body {
+    padding: 10px;
+  }
+
+  .card-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.4;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-spec {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-price {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--teal);
+  }
+
+  .card-price span {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+
+  .stock-badge {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+
+  .stock-ok { background: #e8f5e9; color: #2e7d32; }
+  .stock-low { background: #fff3e0; color: #e65100; }
+  .stock-out { background: #ffebee; color: #c62828; }
+
+  .cat-label {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+    background: rgba(15,110,86,0.12);
+    color: var(--teal);
+  }
+
+  /* ── Loading ── */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 0;
+    color: var(--text-muted);
+    gap: 12px;
+  }
+
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text { font-size: 14px; }
+
+  /* ── Empty ── */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  /* ── Error ── */
+  .error {
+    margin: 16px 12px;
+    padding: 14px;
+    background: #fff3cd;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: #856404;
+    line-height: 1.5;
+  }
+
+  /* ── Section title ── */
+  .section-title {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3h8l1 5H7L8 3z"/>
+        <path d="M7 8c0 8 2 11 5 13c3-2 5-5 5-13"/>
+        <path d="M5 8h14"/>
+      </svg>
+    </div>
+    <div>
+      <div class="header-title">玻璃小店</div>
+      <div class="header-sub">GlassFlow Lab 商品型錄</div>
+    </div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-cat="全部">全部</button>
+  </div>
+</div>
+
+<div id="main">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">載入商品中...</div>
+  </div>
+</div>
+
+<script>
+// ── 設定區（小龍蝦部署時修改這裡）──
+const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
+const LIFF_ID = '1657479438-ZMYpzMaY'; // 開店幫手既有 LIFF ID
+
+// ── 分類對應顯示名稱 ──
+const CAT_MAP = {
+  '六角瓶系列': '六角瓶',
+  '梅酒瓶系列': '梅酒瓶',
+  '目瓶系列': '目瓶',
+  '四方瓶系列': '四方瓶',
+  '油品瓶系列': '油品瓶',
+  '燒酒瓶系列': '燒酒瓶',
+  '配件': '配件',
+};
+
+let allProducts = [];
+let currentCat = '全部';
+
+// ── LIFF 初始化 ──
+async function init() {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+  } catch(e) {
+    console.warn('LIFF init failed, running in browser mode');
+  }
+  loadProducts();
+}
+
+// ── 載入商品（從 Apps Script）──
+async function loadProducts() {
+  try {
+    const res = await fetch(APPS_SCRIPT_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    allProducts = data.filter(p => p.active === 'TRUE');
+    buildTabs();
+    renderProducts('全部');
+  } catch(e) {
+    document.getElementById('main').innerHTML = `
+      <div class="error">
+        ⚠️ 商品資料載入失敗，請稍後再試。<br>
+        <small style="opacity:0.7">${e.message}</small>
+      </div>`;
+  }
+}
+
+// ── 建立分類 Tab ──
+function buildTabs() {
+  const cats = ['全部', ...Object.keys(CAT_MAP).filter(c =>
+    allProducts.some(p => p.note === c)
+  )];
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = cats.map(c => `
+    <button class="tab ${c === '全部' ? 'active' : ''}"
+      data-cat="${c}"
+      onclick="switchTab('${c}')">
+      ${CAT_MAP[c] || c}
+    </button>`).join('');
+}
+
+// ── 切換分類 ──
+function switchTab(cat) {
+  currentCat = cat;
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.cat === cat);
+  });
+  renderProducts(cat);
+}
+
+// ── 渲染商品 ──
+function renderProducts(cat) {
+  const filtered = cat === '全部'
+    ? allProducts
+    : allProducts.filter(p => p.note === cat);
+
+  const main = document.getElementById('main');
+
+  if (filtered.length === 0) {
+    main.innerHTML = '<div class="empty">此分類暫無商品</div>';
+    return;
+  }
+
+  const cards = filtered.map(p => {
+    const stockClass = p.stock_status === '充足' ? 'stock-ok'
+      : p.stock_status === '少量' ? 'stock-low' : 'stock-out';
+
+    const imgContent = p.image_url
+      ? `<img src="${p.image_url}" alt="${p.name}" loading="lazy" onerror="this.parentNode.innerHTML=bottleIcon()">`
+      : bottleIcon();
+
+    const price = parseInt(p.unit_price).toLocaleString('zh-TW');
+
+    return `
+      <a class="card" href="${p.shop_url || '#'}"
+         onclick="handleClick(event, '${p.shop_url}', '${p.name}')">
+        <div class="card-img">${imgContent}</div>
+        <span class="cat-label">${CAT_MAP[p.note] || p.note}</span>
+        <div class="card-body">
+          <div class="card-name">${p.name}</div>
+          <div class="card-spec">${p.spec || ''}</div>
+          <div class="card-footer">
+            <div class="card-price">NT$${price}<span>/組</span></div>
+            <span class="stock-badge ${stockClass}">${p.stock_status}</span>
+          </div>
+        </div>
+      </a>`;
+  }).join('');
+
+  main.innerHTML = `
+    <div class="content">
+      <div class="section-title" style="margin-bottom:10px">共 ${filtered.length} 款商品</div>
+      <div class="grid">${cards}</div>
+    </div>`;
+}
+
+function bottleIcon() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 3h8l1 5H7L8 3z"/>
+    <path d="M7 8c0 8 2 11 5 13c3-2 5-5 5-13"/>
+    <path d="M5 8h14"/>
+  </svg>`;
+}
+
+// ── 點擊商品 ──
+function handleClick(e, url, name) {
+  e.preventDefault();
+  if (!url || url === '#') {
+    alert(`「${name}」\n連結尚未設定，請聯絡客服`);
+    return;
+  }
+  // 若在 LIFF 內，用 liff.openWindow；若在瀏覽器，直接開
+  try {
+    liff.openWindow({ url, external: true });
+  } catch {
+    window.open(url, '_blank');
+  }
+}
+
+init();
+</script>
+</body>
+</html>
